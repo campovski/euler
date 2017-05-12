@@ -1,3 +1,10 @@
+bin/
+
+# LaTeX files
+*.aux
+*.log
+*~
+
 # Object files
 *.o
 *.ko
