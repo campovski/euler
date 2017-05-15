@@ -1,12 +1,9 @@
 #include<stdio.h>
-#include<time.h>
 #include "campovski.h"
 #define N 100003
 
 int main()
 {
-    clock_t begin = clock();
-
     long long largest = 1;
     char* sieve = eratosthenes(N);
 
@@ -16,8 +13,6 @@ int main()
             largest = i;
     }
 
-    clock_t end = clock();
-    printf("%f\n", (float) (end-begin) / CLOCKS_PER_SEC);
     printf("%lli\n", largest);
 
     return 0;

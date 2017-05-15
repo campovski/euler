@@ -11,6 +11,7 @@
 
 \DeclareMathOperator{\lcm}{lcm}
 \DeclareMathOperator{\bigo}{\mathcal{O}}
+\renewcommand{\mod}{\textrm{mod }}
 
 \newenvironment{task}
   {\begin{mdframed}[backgroundcolor=lightgray]}
@@ -82,7 +83,7 @@ Now, beautiful mathematics gives us a formula for computing sum of arithmetic se
 
 \begin{verbatim}
 #include<stdio.h>
-#include "campovski.h"               // needed for GCD function
+#include "campovski.h"               // needed for LCM
 
 int main()
 {
@@ -90,7 +91,7 @@ int main()
     scanf("%d %d %d, &x, &y, &m);    // (in our case "3 5 1000")
     m--;                             // number below m, m not included (1000-1)
     
-    int z = x * y / gcd(x, y);       // LCM(x,y) = x * y / GCD(x,y)
+    int z = lcm(x, y);
     int n1 = (int) m / x;            // calculate range of sum for x (3)
     int n2 = (int) m / y;            // calculate range of sum for y (5)
     int n3 = (int) m / z;            // calculate range of sum for LCM(x,y) (15)
@@ -310,7 +311,7 @@ The second thing you should mind is that we do not need to check whether the new
 
 There are few things we could do better in implementation above and we would not even need to think hard. The first that comes to my mind is, that when we check for primality, we do not need to loop from $2$ to $n$. We only need to loop to $\sqrt{n}$. The reason is that if a number has a higher divisor then its square root, the result of division is smaller than number's square root and it is also a divisor. Therefore we can only check in range from $2$ to $\sqrt{n}$.\\
 
-It is time for some maths. You have learned about \textit{sieve of Eratosthenes} in primary school for sure. The idea behind the sieve is to generate an array of numbers between $2$ and $n$. Then we start and cross out all multiples of $2$, except $2$, which is prime. After that, we cross out all multiples of next number that is not crossed, that is $3$. We continue by crossing the multiples of all numbers that are not crossed. By doing so, we end up with table of prime numbers. For implementation of Eratosthenes' sieve see appendix. The only problem is, that we cannot use it here, because we cannot store $600851475143$ bytes anywhere. We will have to dig further, but here is the implementation using sieve of Eratosthenes. It works for small numbers and it works fast.
+It is time for some maths. You have learned about \textit{sieve of Eratosthenes} in primary school for sure. The idea behind the sieve is to generate an array of numbers between $2$ and $n$. Then we start and cross out all multiples of $2$, except $2$, which is prime. After that, we cross out all multiples of next number that is not crossed, that is $3$. We continue by crossing the multiples of all numbers that are not crossed. By doing so, we end up with table of prime numbers. The array \texttt{eratosthenes} returns is the array of $0$s and $1$s. A $0$ on $i$-th place in array denotes $i$ is prime. For full implementation of Eratosthenes' sieve see appendix. The only problem is, that we cannot use it here, because we cannot store $600851475143$ bytes anywhere. We will have to dig further, but here is the implementation using sieve of Eratosthenes. It works for small numbers and it works fast.
 
 \begin{verbatim}
 #include<stdio.h>
@@ -428,7 +429,204 @@ Two step + \texttt{sqrt} & $0.006801$ & $0.007498$ & $0.001555$ & $0.023457$ & $
 As you can see, running times are quite strange. For small numbers that are not prime the \texttt{one step \texttt{factor}} is faster than \texttt{two step + \texttt{sqrt}}, because square root takes too much time to evaluate. On the other hand, if $n$ happens to be prime, the \texttt{one step \texttt{factor}} takes a lot of time, because it has to search through all numbers below $n$ before realizing it could actually return an answer. Therefore, one can clearly see that \textit{two step + \texttt{sqrt}} is a way to go. The \textit{sieve} is quite fast, but not appropriate for this problem, since has such a specific implementation that it simply cannot compete. We included it just for broadening mind. Mind also, that we computed sieve only once and ran the rest of the program 1000 times. Places with $-$ denote we could not allocate such a huge sieve and empty space means we did not run the program because it would take too long to execute.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\section{Largest palindrome product}
+
+\begin{task}
+A palindromic number reads the same both ways. The largest palindrome made from the product of two 2-digit numbers is $9009 = 91 \cdot 99$.\\
+\\
+Find the largest palindrome made from the product of two 3-digit numbers.
+\end{task}
+
+This task might look a bit awkward at first. The first problem we encounter is how to smartly generate possible products and the second is how to check if the number is palindrome.
+
+We tackle the first problem in this way. For generating products we use two \texttt{for} loops to generate each number in product and then multiply them together. Since we are not stupid, we know that the product $x \cdot y$ is the same as $y \cdot x$. That means, that not both numbers $x$ and $y$ must start their loop at $100$. Instead, the inner loop can start where $x$ has left.
+
+The second problem is a bit trickier. If we were to check if string is palindrome, we could simply iterate over it and check whether the $i$-th character from start is the same as $i$-th character from the end. In case of numbers, we cannot directly iterate over them, but have to first convert them into \texttt{char} arrays. We use function \texttt{int\_to\_arr}, which is defined in \texttt{campovski.h}. Now we can do what we would have done with strings. The other way is to use an algorithm for reversing the number and then checking if original number is the same as reversed, but we are not going to do that. Some other time maybe. If you are eager to learn, you can google how to reverse a number in C and you will get plenty of hits.\\
+
+Now we are good to go implement the program.
+
+\begin{verbatim}
+#include<stdio.h>
+#include<math.h>
+#include<stdlib.h>
+#include "campovski.h"          // needed for INT_TO_ARR
+
+char is_palindrome(int n);
+
+int main()
+{
+    int largest = 10000;        // 10000 = 100 * 100
+
+    for (int x = 100; x <= 999; x++)
+    {
+        for (int y = x; y <= 999; y++)  // evade double checking
+        {
+            if (is_palindrome(x*y) && x * y >= largest)
+                largest = x * y;
+        }
+    }
+
+    printf("%d\n", largest);
+
+    return 0;
+}
+
+char is_palindrome(int n)
+{
+    char* n_arr = int_to_arr(n);
+    int l = floor(log10(abs(n))) + 1;
+    for (int i = 0; i < (int) l/2; i++)
+    {
+        if (n_arr[i] != n_arr[l-i-1])
+            return 0;
+    }
+
+    return 1;
+}
+\end{verbatim}
+
+Although this program seems alright, there are still some improvements to make. First, let us assume that the largest palindrome product will be a product of two large 3-digit numbers. Therefore, we can start with $x = 999$, decrement $x$ on each iteration and break the inner \texttt{for} loop when $y$ is so small that $x * y \leq \textrm{largest}$. By doing that we hope to spend less time for finding the largest palindrome product.
+
+The next improvemt is not always possible, therefore we will still consider the above program as BEST! This improvement comes after doing some maths. We realize that $111111 = 143\cdot 777$ is palindromic and $999 \cdot 999 < 1000000$. That means that the largest palindrome that is a product of two 3-digit numbers has 6 digits. Let $p$ be a palindromic number with 6 digits. Then we can write
+\begin{align*}
+p &= 100000a + 10000b + 1000c + 100c + 10b+ a\\
+&= 100001a + 10010b + 1100c\\
+&= 11(9091a + 910b + 100c)
+\end{align*}
+
+We figured out, that $11$ must divide the 6-digit palindrome. Since $11$ is a prime, a theorem from number theory and abstract algebra tells us, that at least one of $x$ and $y$ must be divisible by $11$. Therefore, if $x$ is not divisible by $11$, $y$ has to be. Using the information derived and described above, we can implement next program.
+
+\begin{verbatim}
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+#include "campovski.h"         // needed for INT_TO_ARR
+
+char is_palindrome(int n);
+
+int main()
+{
+    int largest = 111111;       // 111111 = 143 * 777
+    int y, dy;
+
+    for (int x = 999; x >= 100; x--)
+    {
+        if (x % 11 == 0)       // 11 divides x, doesn't need to divide y
+        {
+            y = 999;           // we must check all y's
+            dy = 1;            // and decrement by 1
+        }
+        else                   // 11 must divide y
+        {
+            y = 990;           // largest 3 digit number that y % 11 = 0
+            dy = 11;           // decrement by 11
+        }
+
+        for (; y >= x; y -= dy)
+        {
+            if (x * y <= largest)    // don't even need to check if
+                break;               // the product is palindrome
+            if (is_palindrome(x*y))
+                largest = x * y;
+           // y -= dy;
+        }
+    }
+
+    printf("%d\n", largest);
+
+    return 0;
+}
+
+char is_palindrome(int n)
+{
+    char* n_arr = int_to_arr(n);
+    int l = floor(log10(abs(n))) + 1;
+    for (int i = 0; i < (int) l/2; i++)
+    {
+        if (n_arr[i] != n_arr[l-i-1])
+            return 0;
+    }
+
+    return 1;
+}
+\end{verbatim}
+
+I tested the program above for finding the largest palindrome product of two $n$-digit numbers, where $n \in \{3,4,5\}$. The table above shows running times.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{||l||c|c||}	
+\hhline{|t:===:t|}
+\textit{Algorithm} & $t(n=3)$ & $t(n=4)$\\ \hhline{||=||=|=||}
+Simple & $0.140$ & $5.852$ \\ \hhline{||-||-|-||}
+Advanced & $0.086 / 1000$ & \\ \hhline{|b:===:b|}
+\end{tabular}
+\caption{Running time (in seconds) of two implementations for finding largest palindromic product of two $n$-digit numbers. The time was measured by \texttt{time} command in bash shell.}
+\end{table}
+
+As we assumed the second algorithm was much faster, but it could not be used in case of $n = 4$, since the product of two 4-digit numbers can either be a 7-digit or 8-digit number. We could of course break that down too and maybe find something interesting but we are not going to. You can do that for your homework.\\
+
+From now on, we will be measuring running time with Unix \texttt{time} command rather than with \texttt{time.h}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Smallest multiple}
+
+\begin{task}
+$2520$ is the smallest number that can be divided by each of the numbers from $1$ to $10$ without any remainder.\\
+\\
+What is the smallest positive number that is evenly divisible by all of the numbers from $1$ to $20$?
+\end{task}
+
+This is the first task that actually requires us to know some maths. There is no naive implementation that would just pop up from nowhere. What this task actually requires is to solve the next system of linear congruences:
+\begin{align*}
+n &\equiv 0~(\mod 1)\\
+n &\equiv 0~(\mod 2)\\
+n &\equiv 0~(\mod 3)\\
+&~~\vdots\\
+n &\equiv 0~(\mod 20)
+\end{align*}
+
+The only thing we are lucky here is, that they $n$ has to be congruent to $0$ by all moduli. The reason for that is, that if $x$ was to be congruent to some other number, we would have to use \textit{Chinese remainder theorem}. And since Chinese remainder theorem only works when moduli are pairwise coprime, meaning that $\gcd$ of each pair of moduli is $1$, we would have to disassemble the pairs of congruences where $\gcd$ of moduli would not be $1$. The reason why we do not need to use Chinese remainder theorem is fairly obvious. Since $n$ has to be congruent to $0$, that means that $n$ has to be a multiple of moduli. Because we are looking for the smallest number that satisfies these criteria, we are actually looking for least common multiple of moduli. Once we know that, the implementation is really easy, just like ''Hello world!''.\\
+
+Let me just mention few things on how to implement the algorithm. First, since $1$ divides every number, we can omit the first congruence. Second, the following is true and can be easily proved: \[\lcm(x,y,z) = \lcm(\lcm(x,y), z) = \lcm(x, \lcm(y,z)).\] We can use that to compute $\lcm$ on-the-fly, meaning we can compute the $\lcm$ of previous $\lcm$ and next modulo and the result will be the $\lcm$ of all moduli.
+
+\begin{verbatim}
+#include<stdio.h>
+#include "campovski.h"                // used for LCM
+
+int main()
+{
+    int r = 20;                       // the highest modulo is 20
+    long long n = 2;                  // 1 divides everything
+
+    for (int i = 3; i < r; i++)
+        n = lcm(n, i);                // compute lcm of moduli
+
+    printf("%lli\n", n);
+
+    return 0;
+}
+\end{verbatim}
+
+This algorithm is faster than light. I ran it with different $r$s and the following table shows the results.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{||l||c|c|c||}
+\hhline{|t:====:t|}
+\textit{Algorithm} & $t(r = 20)$ & $t(r = 30)$ & $t(r = 40)$ \\ \hhline{||=||=|=|=||}
+\texttt{lcm} & $0.676 \times 10^{-6}$ & $1.112 \times 10^{-6}$ & $1.508 \times 10^{-6}$ \\ \hhline{|b:====:b|}
+\end{tabular}
+\caption{Running time (in seconds) of the algorithm, measured by Unix \texttt{time} bash command.}
+\end{table}
+
+The limit on $r$ is $r = 43$. With $r >= 44$ we cannot store $n$ in \texttt{unsigned long long}. Note, that \textit{Project Euler Problem 5 overview} contains different algorithm, but that algorithm is highly impractical. The reason is, that the algorithm assumes it is given an array of prime numbers, which takes time to calculate. Furthermore, we cannot use our \texttt{eratosthenes} from \texttt{campovski.h} because that array contains a lot of zeros and uses a lot of important memory. We would need to implement another function that can compute large primes in a moment and return the array prime numbers. We might do that in the future, if we come across some high primality problem.
+
+The algorithm provided by Project Euler is suitable for extremely large numbers, which you would need to store in \texttt{char} array but we are not going to go into that at this moment. If you want you can check the algorithm after you have succesfully solved the problem and checked the solution.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -544,7 +742,20 @@ int main()
 
 Let me take another note on \texttt{char}s. One \texttt{char} is 1 byte, 1 byte is 8 bits and 1 bit can store two values, \texttt{0} and \texttt{1}. Since we can store 8 bits in a byte, that means, we can store $2^8$ values in 1 byte. Therefore, if we only have less than $2^8 = 256$ different signs to store, we can use a \texttt{char}. We use so called ASCII table, which is nothing else but a bijection between symbols like characters, numbers, punctuation, etc. and numbers between $0$ and $255$. For example, a character \texttt{"A"} has an ASCII value of \texttt{65}. Therefore, if we write something like \texttt{char c = "A";}, what actually gets stored in \texttt{c} is the number \texttt{65}, which represents \texttt{"A"}. That means, that if we store \texttt{42} in \texttt{char}, the computer might understand that as a character with ASCII value of 42, that is \texttt{*}, but it can serve as a pure number for our needs, see what I mean? For full ASCII table go ahead and google it, there is really no point in creating one here.
 
-Also, we will not be making any time comparison here, since we only have one algorithm, the running time of which is clearly $\bigo(n)$, where $n$ is the length of Fibonacci number, in our case $n = 1000$.
+Also, we will not be making any time comparison here, since we only have one algorithm, the running time of which is clearly $\bigo(n)$, where $n$ is the length of Fibonacci number, in our case $n = 1000$.\\
+
+I measured the running times of above programs with Unix \texttt{time} bash command. The following table contains results.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{||l||c|c|c||}
+\hhline{|t:====:t|}
+\textit{Algorithm} & $t(n=10^3)$ & $t(n=10^4)$ & $t(n=10^5)$\\ \hhline{||=||=|=|=||}
+\texttt{int*} & $0.076$ & $4.004$ & $398.320$ \\ \hhline{||-||-|-|-||}
+\texttt{char*} & $0.040$ & $4.064$ & $402.524$ \\ \hhline{|b:====:b|}
+\end{tabular}
+\caption{Running times of the implementations with respect to $n$, where $n$ is the desired length of Fibonacci number.} 
+\end{table}
 
 
 

@@ -3,18 +3,19 @@
 
 int main()
 {
-    int* x = (int*) malloc(1000*sizeof(int));
-    int* y = (int*) malloc(1000*sizeof(int));
-    int* tmp = (int*) malloc(1000*sizeof(int));
+    int l = 1000;
+    int* x = (int*) malloc(l*sizeof(int));
+    int* y = (int*) malloc(l*sizeof(int));
+    int* tmp = (int*) malloc(l*sizeof(int));
     int inc = 0;
 
     x[0] = 1;
     y[0] = 1;
     int count = 2;
 
-    while (!y[999])
+    while (!y[l-1])
     {
-        for (int i = 0; i < 1000; i++)
+        for (int i = 0; i < l; i++)
         {
             int s = x[i] + y[i] + inc;
             tmp[i] = s % 10;

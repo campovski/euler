@@ -1,10 +1,8 @@
 #include<stdio.h>
 #include<math.h>
-#include<time.h>
 
 int main()
 {
-    clock_t begin = clock();
     long long largest = 1;
     long long n = 600851475143;
 
@@ -37,8 +35,5 @@ int main()
         printf("%lli\n", largest);
     else printf("%lli\n", n);
     
-    clock_t end = clock();
-    printf("%f\n", (float) (end-begin)/CLOCKS_PER_SEC);
-
     return 0;
 }
