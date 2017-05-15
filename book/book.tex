@@ -116,9 +116,9 @@ I tested all three of the above programs with number $x = 3$, $y = 5$, and $m \i
 \textit{Algorithm} & $t(m = 10^3)$ & $t(m = 10^6)$ & $t(m=10^9)$ & $t(m=10^{12})$\\
 \hhline{||=||=|=|=|=||}
 Three \texttt{for} loops & $0.000002$ & $0.001528$ & $1.384336$ & $1321.064965$\\
-\hline
+\hhline{||-||-|-|-|-||}
 One \texttt{for} loop & $0.000004$ & $0.003579$ & $3.020462$ & \\
-\hline
+\hhline{||-||-|-|-|-||}
 Formula & $< 0.000001$ & $< 0.000001$ & $< 0.000001$ & $< 0.000001$\\
 \hhline{|b:=====:b|}
 \end{tabular}
@@ -251,14 +251,300 @@ I ran all three programs and measured the time with \texttt{time.h} but the prec
 \begin{tabular}{||l||c|c|c||}
 \hhline{|t:====:t|}
 \textit{Algorithm} & $t(r = 10^3)$ & $t(r = 10^6)$ & $t(r = 10^9)$\\ \hhline{||=||=|=|=||}
-\texttt{for} and \texttt{if} & $0.001498$ & $0.335005$ & $330.163120$\\ \hhline{||=||=|=|=||}
-Naive three step & $0.000784$ & $0.183093$ & $181.040890$\\ \hhline{||=||=|=|=||}
+\texttt{for} and \texttt{if} & $0.001498$ & $0.335005$ & $330.163120$\\ \hhline{||-||-|-|-||}
+Naive three step & $0.000784$ & $0.183093$ & $181.040890$\\ \hhline{||-||-|-|-||}
 Three step formula & $0.000215$ & $0.102709$ & $97.865098$\\ \hhline{|b:====:b|}
 \end{tabular}
 \caption{Table shows the running time (in seconds) of given algorithms in relation to $r$, where $r$ is the number of repetitions the core of program (the algorithm) ran. Time was measured with help of \texttt{time.h}.}
 \end{table}
 
 The results are just like we expected them to be. The \textit{three step formula} (last algorithm) is three times as fast as the \textit{\texttt{for} and \texttt{if}} (first algorithm). The \textit{naive three step} (second algorithm) is somewhere in the middle.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Largest prime factor}
+
+\begin{task}
+The prime factors of $13195$ are $5$, $7$, $13$, and $29$.\\
+\\
+What is the largest prime factor of the number $600851475143$?
+\end{task}
+
+There is a pretty straightforward solution to this problem that seemingly runs in $\bigo(n)$. What we can do is to loop through every number below $600851475143$ and check whether it is a prime and whether it divides $600851475143$. The most easily grasped solution with high running time. But why did I say it \textit{seemingly} runs in $\bigo(n)$. The answer is simple. We have to loop through $n$ numbers, for each check, whether it is a prime or not, that adds another $n$ in game. The total running time is then $\bigo(n^2)$. With $n = 600851475143$, my head starts burning. I just hope my computer will not. Let us implement this monstrous piece. I advise you not to try this at home. (Not sure should I do a backup first or not...)
+
+\begin{verbatim}
+#include<stdio.h>
+#include<stdlib.h>
+#define N 600851475143
+
+int is_prime(long n);
+
+int main()
+{
+    long largest = 1;
+    for (long i = 2; i <= N; i++)
+    {
+        if (N % i == 0 && is_prime(i))
+            largest = i;
+    }
+
+    printf("%li\n", largest);
+
+    return 0;
+}
+
+int is_prime(long n)
+{
+    for (int i = 2; i < n; i++)
+    {
+        if (n % i == 0)
+            return 0;
+    }
+    return 1;
+}
+\end{verbatim}
+
+Mind two things: Although this is a not do at home algorithm, this might come in handy sometime in the future. Mind how we wrote \texttt{N \% i == 0} before \texttt{is\_prime(i)} in \texttt{if} clause of function \texttt{main}. Since we wrote it this way, the computer will first check whether \texttt{i} divides \texttt{N}. If not, it will not bother executing \texttt{is\_prime(i)}, since the \texttt{AND} clause will evaluate to \texttt{0} no matter the second argument. By doing that, we make sure, that we do not check every number for primality and therefore the running time of algorithm is reduced substantially. What we could also do is return $n$ when the for loop comes to it and \texttt{largest == 1}, since we did not find any other divisor of $n$, meaning $n$ is prime and we do not need to check its primality.
+
+The second thing you should mind is that we do not need to check whether the new prime divisor is greater than the largest. You might have seen it by yourself why is so, but if not, here is the deal. The \texttt{i}, which is a possible prime divisor, increases and never decreases. Therefore, it always holds \texttt{i > largest}.\\
+
+There are few things we could do better in implementation above and we would not even need to think hard. The first that comes to my mind is, that when we check for primality, we do not need to loop from $2$ to $n$. We only need to loop to $\sqrt{n}$. The reason is that if a number has a higher divisor then its square root, the result of division is smaller than number's square root and it is also a divisor. Therefore we can only check in range from $2$ to $\sqrt{n}$.\\
+
+It is time for some maths. You have learned about \textit{sieve of Eratosthenes} in primary school for sure. The idea behind the sieve is to generate an array of numbers between $2$ and $n$. Then we start and cross out all multiples of $2$, except $2$, which is prime. After that, we cross out all multiples of next number that is not crossed, that is $3$. We continue by crossing the multiples of all numbers that are not crossed. By doing so, we end up with table of prime numbers. For implementation of Eratosthenes' sieve see appendix. The only problem is, that we cannot use it here, because we cannot store $600851475143$ bytes anywhere. We will have to dig further, but here is the implementation using sieve of Eratosthenes. It works for small numbers and it works fast.
+
+\begin{verbatim}
+#include<stdio.h>
+#include "campovski.h"                  // needed for ERATOSTHENES
+#define N 100003                        // some small number
+
+int main()
+{
+    char* sieve = eratosthenes(N);      // get prime array
+    int largest = 1;
+
+    for (int i = 2; i <= N; i++)
+    {
+        if (!sieve[i] && N % i == 0)    // if i is prime, sieve[i] = 0
+            largest = i;
+    }
+
+    printf("%d\n", largest);
+
+    return 0;
+}
+
+\end{verbatim}
+
+The idea for next algorithm comes directly from Eratosthenes but instead of creating a sieve, we completely divide out each of the divisor of $n$. By doing that we make sure that the next divisor will certainly be prime and therefore we do not need to check for divisor whether it is prime or not. By doing so we spare a lot of time, because every time we find a divisor $a$, we divide $n$ by $a$ as many times as we can, meaning we end up with smaller and smaller $n$, thus the calculation become faster and faster. Next implementation shows how that is done.
+
+\begin{verbatim}
+#include<stdio.h>
+#include<stdlib.h>
+
+int main()
+{
+    long long n = 600851475143;
+    long long factor = 2;
+    long long largest;
+
+    while (n > 1)
+    {
+        if (!(n % factor))
+        {
+            largest = factor;
+            do {
+                n /= factor;
+            } while (!(n % factor));
+        }
+
+        factor++;
+    }
+
+    printf("%lli\n", largest);
+
+    return 0;
+}
+\end{verbatim}
+
+This algorithm can be improved in two ways. It is obvious that $2$ is the only even-valued prime number. Therefore we can treat it on its own. By doing so, we can increase \texttt{factor} by 2 on each iteration and only traverse over odd numbers. The second improvement comes with realisation that every number can have at most one prime factor greater than $\sqrt{n}$. That leaves us with two options, either we found a factor lower then $\sqrt{n}$, divided it out and continued with next iteration, or we came to $\sqrt{n}$ and did not find a factor. In second option, we can stop checking since if there is no prime smaller then $n$ that would divide $n$, then the only numbers that divide $n$ are $1$ and $n$. That means $n$ is a prime and we return it. The next implementation does exactly that.
+
+\begin{verbatim}
+#include<stdio.h>
+#include<math.h>
+
+int main()
+{
+    long long n = 600851475143;
+    long long largest = 1;
+
+    if (!(n % 2))
+    {
+        largest = 2;
+        do {
+            n /= 2;
+        } while (!(n % 2));
+    }
+
+    long long factor = 3;
+    long long max_factor = (long long) sqrt(n);
+
+    while (n > 1 && factor <= max_factor)
+    {
+        if (!(n % factor))
+        {
+            largest = factor;
+            do {
+                n /= factor;
+            } while (!(n % factor));
+            max_factor = (long long) sqrt(n);
+        }
+
+        factor += 2;
+    }
+
+    if (n == 1)
+        printf("%lli\n", largest);
+    else printf("%lli\n", n);
+
+    return 0;
+}
+\end{verbatim}
+
+I measured the running time of algorithms and the results were quite shocking. The first algorithm needed..., while the second and third one were surprisingly fast. The next table shows running times of algorithms with respect to $n$. Each program was run 1000 times to ensure smaller relative error, except for \textit{one step \texttt{factor}} on $n = 100123456789$.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{||l||c|c|c|c|c||}
+\hhline{|t:======:t|}
+\textit{Algorithm} & $t(n = 10^3)$ & $t(n = 10^6)$ & $t(n = 10^5 + 3)$ & $t(n = n_1)$ & $t(n= n_2)$\\ \hhline{||=||=|=|=|=|=||}
+Monster & $0.012390$ & $8.448938$ & $1.754996$ &  &\\ \hhline{||-||-|-|-|-|-||}
+Sieve & $0.009984$ & $3.659880$ & $0.454618$ & $-$ & $-$ \\ \hhline{||-||-|-|-|-|-||}
+One step \texttt{factor} & $0.000478$ & $0.000634$ & $0.214148$ & $0.130969$ & $\sim116$ days\\ \hhline{||-||-|-|-|-|-||}
+Two step + \texttt{sqrt} & $0.006801$ & $0.007498$ & $0.001555$ & $0.023457$ & $1.362939$ \\ \hhline{|b:======:b|}
+\end{tabular}
+\caption{Table shows the running time (in seconds) of given algorithms with respect to $n$, where $n$ is the number whose greatest prime factor we are trying to calculate. $n_1 = 600851475143$ and $n_2 = 100123456789$ ($n_2$ is prime). Time was measured with help of \texttt{time.h}.}
+\end{table}
+
+As you can see, running times are quite strange. For small numbers that are not prime the \texttt{one step \texttt{factor}} is faster than \texttt{two step + \texttt{sqrt}}, because square root takes too much time to evaluate. On the other hand, if $n$ happens to be prime, the \texttt{one step \texttt{factor}} takes a lot of time, because it has to search through all numbers below $n$ before realizing it could actually return an answer. Therefore, one can clearly see that \textit{two step + \texttt{sqrt}} is a way to go. The \textit{sieve} is quite fast, but not appropriate for this problem, since has such a specific implementation that it simply cannot compete. We included it just for broadening mind. Mind also, that we computed sieve only once and ran the rest of the program 1000 times. Places with $-$ denote we could not allocate such a huge sieve and empty space means we did not run the program because it would take too long to execute.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setcounter{section}{24}
+\section{1000-digit Fibonacci number}
+
+\begin{task}
+The Fibonacci sequence is defined by the recurrence relation:
+\[F_n = F_{n-1} + F_{n-2},\textrm{ where $F_1 = 1$ and $F_2 = 1$}.\]
+Hence the first $12$ terms will be:
+\begin{align*}
+F_1 &= 1\\
+F_2 &= 1\\
+F_3 &= 2\\
+F_4 &= 3\\
+F_5 &= 5\\
+F_6 &= 6\\
+F_7 &= 13\\
+F_8 &= 21\\
+F_9 &= 34\\
+F_{10} &= 55\\
+F_{11} &= 89\\
+F_{12} &= 144
+\end{align*}
+The $12$th term, $F_{12}$, is the first term to contain three digits.\\
+\\
+What is the index of the first term in the Fibonacci sequence to contain $1000$ digits?
+\end{task}
+
+This is one of the problems that we are particularly not lucky to be programming in C. We cannot store the $1000$ digit number in any of number types. We will have to use array of \texttt{int}s (we could use \texttt{char}s, but it is really not necessary, since we do not need to spare with memory). The only possible solution to this problem is brute force, since there are no known rules for how Fibonacci numbers' lengths increase. In languages like Python we could write the solution to this problem very easily because we do not need to worry about storing such huge numbers. The solution in Python is this:
+
+\begin{verbatim}
+x = 1
+y = 1
+count = 2
+while len(str(y)) != 1000:
+    x, y = y, x + y
+    count += 1
+print count
+\end{verbatim}
+
+Simple as f***. Now, the solution in C is not much harder, we just have to be careful with arrays. Since we will not care about memory, we can allocate three $1000$ \texttt{int}s long arrays, one for $F_{n-1}$, one for $F_n$, and one for $F_{n+1}$. Then we loop over all the digits in $F_{n-1}$ and $F_n$ and calculate each digit of $F_{n+1}$ by piece. The only problem is, that we must take care of the situation where \texttt{F(n-1)[i] + F(n)[i] >= 10}. In this case, we have to remember to increment the next digit. Fairly simple, but quite painful. The next implementation does exactly that.
+
+\begin{verbatim}
+#include<stdio.h>
+#include<stdlib.h>
+
+int main()
+{
+    int* x = (int*) malloc(1000*sizeof(int));
+    int* y = (int*) malloc(1000*sizeof(int));
+    int* tmp = (int*) malloc(1000*sizeof(int));
+    int inc = 0;                                  // increment on next step
+
+    x[0] = 1;                                     // F(1) = 1
+    y[0] = 1;                                     // F(2) = 1
+    int count = 2;                                // we already know 2 numbers
+
+    while (!y[999])                               // loop while 1000th digit is 0
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            int s = x[i] + y[i] + inc;            // sum of i-th digit + increment
+            tmp[i] = s % 10;                      // digit of F(n+1)
+            x[i] = y[i];                          // F(n) becomes F(n-1)
+            y[i] = tmp[i];                        // F(n+1) becomes F(n)
+            inc = (s >= 10) ? 1 : 0;              // if s>=10, we must inc on next iter
+        }
+        count++;
+    }
+
+    printf("%d\n", count);
+
+    return 0;
+}
+\end{verbatim}
+
+Now if we would want to spare with memory, we would have two options. The first thing we could do is change all \texttt{int} values to \texttt{short}s. That would spare a lot of the memory we used for variables. But furthermore, since we know that we will only be using really small numbers at a time (less then $9+9+1 = 19$), we could allocate a \texttt{char} array and spare even more. Many people think that \texttt{char} stands for \textit{character}. Well, it actually does, but the \texttt{char} type can normally store integral values, just as long as they do not exceed $2^8$. Instead of $4$ bytes (can store up to $2^{32}$) for an \texttt{int}, we could only use $1$ byte (can store up to $2^8$) for a \texttt{char}. The implementation is the same.
+
+\begin{verbatim}
+#include<stdio.h>
+#include<stdlib.h>
+
+int main()
+{
+    char* x = (char*) malloc(1000*sizeof(char));
+    char* y = (char*) malloc(1000*sizeof(char));
+    char* tmp = (char*) malloc(1000*sizeof(char));
+    char inc = 0;
+
+    x[0] = 1;
+    y[0] = 1;
+    int count = 2;
+
+    while (!y[999])
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            char s = x[i] + y[i] + inc;
+            tmp[i] = s % 10;
+            x[i] = y[i];
+            y[i] = tmp[i];
+            inc = s >= 10 ? 1 : 0;
+        }
+        count++;
+    }
+
+    printf("%d\n", count);
+
+    return 0;
+}
+\end{verbatim}
+
+Let me take another note on \texttt{char}s. One \texttt{char} is 1 byte, 1 byte is 8 bits and 1 bit can store two values, \texttt{0} and \texttt{1}. Since we can store 8 bits in a byte, that means, we can store $2^8$ values in 1 byte. Therefore, if we only have less than $2^8 = 256$ different signs to store, we can use a \texttt{char}. We use so called ASCII table, which is nothing else but a bijection between symbols like characters, numbers, punctuation, etc. and numbers between $0$ and $255$. For example, a character \texttt{"A"} has an ASCII value of \texttt{65}. Therefore, if we write something like \texttt{char c = "A";}, what actually gets stored in \texttt{c} is the number \texttt{65}, which represents \texttt{"A"}. That means, that if we store \texttt{42} in \texttt{char}, the computer might understand that as a character with ASCII value of 42, that is \texttt{*}, but it can serve as a pure number for our needs, see what I mean? For full ASCII table go ahead and google it, there is really no point in creating one here.
+
+Also, we will not be making any time comparison here, since we only have one algorithm, the running time of which is clearly $\bigo(n)$, where $n$ is the length of Fibonacci number, in our case $n = 1000$.
 
 
 
