@@ -17,6 +17,8 @@ unsigned long long lcm(unsigned long long x, unsigned long long y)
 char* eratosthenes(unsigned long long n)
 {
     char* sieve = (char*) malloc(n*sizeof(char));
+    sieve[0] = 1;
+    sieve[1] = 1;
 
     for (unsigned long long i = 2; i < n; i++)
     {

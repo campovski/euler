@@ -628,6 +628,127 @@ The limit on $r$ is $r = 43$. With $r >= 44$ we cannot store $n$ in \texttt{unsi
 
 The algorithm provided by Project Euler is suitable for extremely large numbers, which you would need to store in \texttt{char} array but we are not going to go into that at this moment. If you want you can check the algorithm after you have succesfully solved the problem and checked the solution.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Sum square difference}
+
+\begin{task}
+The sum of the squares of the first ten natural numbers is \[1^2 + 2^2 + \dotsm + 10^2 = 385.\] The square of the sum of the first ten natural numbers is \[(1+2+ \dotsm + 10) ^2 + 55^2 = 3025.\] Hence the difference between the sum of the squares of the first ten natural numbers and the square of the sum is $3025 - 385 = 2640$.\\
+\\
+Find the difference between the sum of the squares of the first one hundred natural numbers and the square of the sum.
+\end{task}
+
+This task is really simple. Even a child in primary school can solve it. All you have to do is loop from numbers between $1$ and $100$, calculate their squares and add that number to final sum At the same time we add each number to \texttt{tmp} which is a normal sum of integers between $1$ and $100$. At the end we subtract the normal sum squared from the sum of squares and print a number that is greater than $0$. BAM, problem 6 done!
+
+\begin{verbatim}
+#include<stdio.h>
+
+int main()
+{
+    int sum = 0;                            // sum of squares
+    int tmp = 0;                            // sum of natural
+    for (int i = 1; i <= 100; i++)
+    {
+        sum += i * i;
+        tmp += i;
+    }
+    sum -= tmp * tmp;                       // calculate difference
+
+    printf("%d\n", sum >= 0 ? sum : -sum);  // print nonnegative sum
+
+    return 0;
+}
+\end{verbatim}
+
+But wait, there must be something behind this problem. It cannot be that easy and the straightforward solution shall not return the answer instantly... Actually there is a better solution. The implementation above runs in $\bigo(n)$. But since this is a simple mathematical problem, there exists a solution that runs in $\bigo(1)$. Let me walk you to better solution.\\
+
+In \textit{problem 1} we already discussed the concept of \textit{arithmetic series}. The sum of natural numbers between $1$ and $n$ is nothing else but an arithmetic series with $a_1 = 1$ and $d = 1$. So we derive the next formula: \[\sum_{i=1}^n i = \frac{n(n+1)}{2}.\] For the sum of squares, there also exists a formula, which we are not going to derive here but the derivation can easily be found online. The formula is \[\sum_{i=1}^n i^2 = \frac{n(n+1)(2n+1)}{6}.\] Once known it can be quite easily proved by the law of induction. Knowing this two formulas, we get a solution that runs in $\bigo(1)$.
+
+\begin{verbatim}
+#include<stdio.h>
+
+int main()
+{
+    int n = 100;
+    int sum_squares = n * (n+1) * (2*n+1) / 6;  // sum of squares
+    int sum = n * (n+1) / 2;                    // sum of natural
+    int diff = sum_squares - sum * sum;         // difference
+
+    printf("%d\n", diff >= 0 ? diff : -diff);   // print nonnegative diff
+
+    return 0;
+}
+\end{verbatim}
+
+Mind, that we did not need the extra variable \texttt{diff}. We only did that to make the code more readable. Another thing we could do in some other situation is, that we could divide by 6 in \texttt{sum\_squares} at some other position and by that evade the number from growing over the result of that whole line operation, thus being able to calculate higher sums since we would not overflow. But in this case we cannot do that, since we do not know whether any of numbers $n$, $n+1$, and $2n+1$ is divisible by $6$. I am just saying this so you know that the order of operation matters and can sometimes get really useful. For example, if we knew that $n$ is even, we could write \texttt{int sum = n / 2 * (n+1);} and may be able to calculate sum for higher $n$, because we would first halve the $n$ and then multiply it by $n+1$. Similarly, if $n$ was even, we could write \texttt{int sum = (n+1) / 2 * n;}.
+
+I ran the above programs and measured running time with Unix \texttt{time}. The results are in the following table.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{||l||c|c|c||}
+\hhline{|t:====:t|}
+\textit{Algorithm} & $t(n=10^2)$ & $t(n = 10^3)$ & $t(n=10^4)$\\ \hhline{||-||---||}
+Brute force & $0.384 \times 10^{-6}$ & $2.964 \times 10^{-6}$ & $29.340 \times 10^{-6}$\\ \hhline{||-||---||}
+Formulas & $0.016 \times 10^{-6}$ & $0.012 \times 10^{-6}$ & $0.024 \times 10^{-6}$ \\ \hhline{|b:====:b|}
+\end{tabular}
+\caption{Running time (in seconds) of programs. They were run $10^6$-times, that is why the time is then divided by $10^6$. $n$ is the upper range of the sum we are calculating (from $1$ to $n$).}
+\end{table}
+
+One can clearly see, that first program is nicely linear in $n$. The second runs in constant time... Actually it runs in some respect to the length of $n$, since the longer the number, the more time it needs to multiply. But that is still $\bigo(1)$ with respect to $n$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{10001st prime}
+
+\begin{task}
+By listing the first six prime numbers: $2$, $3$, $5$, $7$, $11$, and $13$, we can see that the 6th prime is $13$.\\
+\\
+What is the 10001st prime number?
+\end{task}
+
+We have already discussed a great deal about prime numbers in \textit{problem 3}. Therefore, we are not going to go in any details here. We are going to use \texttt{eratosthenes} from \texttt{campovski.h} which starts with array of $0$ and then places $1$ on $i$-th place if $i$ is NOT a prime number.
+
+After acquiring the eratosthenes sieve, we loop through it and every time we find $0$ we add $1$ to count of prime numbers. When count reaches $10001$, we stop and print the index. If the returned index is \texttt{i = len(sieve) - 1}, the sieve made is not big enough, because we now that \texttt{(len(sieve) - 1} is not a prime number, since it is even.
+
+\begin{verbatim}
+#include<stdio.h>
+#include "campovski.h"
+
+int main()
+{
+    char* sieve = eratosthenes(1000001);  // generate huge sieve
+    int count = 0;                        // count of primes
+
+    int i;                                // we will need i outside the loop
+    for (i = 2; i < 1000001; i++)
+    {
+        if (!sieve[i])                    // if sieve[i] = 0 then i is prime
+            count++;                      // we found another prime
+        if (count == 10001)               // we found 10001st prime
+            break;
+    }
+
+    printf("%d\n", i);
+
+    return 0;
+}
+\end{verbatim}
+
+Let us take a look at the running times of above implementation with different $n$s, where $n$ means that we want to find $n$-th prime.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{||l||c|c|c|c||}
+\hhline{|t:=====:t|}
+\textit{Algorithm} & $t(n=10001)$ & $t(n = 10^5)$ & $t(n=10^6)$ & $t(n=10^7)$\\ \hhline{||-||----||}
+Sieve walk & $0.048$ & $0.236$ & $2.700$ & $29.080$ \\ \hhline{|b:=====:b|}
+\end{tabular}
+\caption{Running time (in seconds) of programs. We used a sieve of size $10^6 + 1$ for $n=10001$, $10^7 + 1$ for $n = 10^5$, $10^8 + 1$ for $n = 10^6$. and $10^9 + 1$ for $n = 10^7$.}
+\end{table}
+
+The algorithm is lovely linear. We increase $n$ ten times, the running time increases ten times.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \setcounter{section}{24}
